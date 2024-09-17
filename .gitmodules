@@ -1,0 +1,9 @@
+[submodule "devops-learning"]
+	path = devops-learning
+	url = https://github.com/nitinkc/devops-learning.git
+[submodule "DockerConcepts"]
+	path = DockerConcepts
+	url = https://github.com/nitinkc/DockerConcepts.git
+[submodule "GCP_Kubernetes"]
+	path = GCP_Kubernetes
+	url = https://github.com/nitinkc/GCP_Kubernetes.git
