@@ -7,3 +7,9 @@
 [submodule "GCP_Kubernetes"]
 	path = GCP_Kubernetes
 	url = https://github.com/nitinkc/GCP_Kubernetes.git
+[submodule "HelmCharts"]
+	path = HelmCharts
+	url = https://github.com/nitinkc/HelmCharts.git
+[submodule "gitlab-spring-app-flux"]
+	path = gitlab-spring-app-flux
+	url = https://gitlab.com/grp-flux/gitlab-spring-app-flux.git
