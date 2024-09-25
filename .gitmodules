@@ -1,6 +1,3 @@
-[submodule "devops-learning"]
-	path = devops-learning
-	url = https://github.com/nitinkc/devops-learning.git
 [submodule "DockerConcepts"]
 	path = DockerConcepts
 	url = https://github.com/nitinkc/DockerConcepts.git
@@ -13,3 +10,6 @@
 [submodule "gitlab-spring-app-flux"]
 	path = gitlab-spring-app-flux
 	url = https://gitlab.com/grp-flux/gitlab-spring-app-flux.git
+[submodule "jenkins-learning"]
+	path = jenkins-learning
+	url = https://github.com/nitinkc/jenkins-learning.git
