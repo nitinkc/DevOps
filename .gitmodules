@@ -13,3 +13,6 @@
 [submodule "jenkins-learning"]
 	path = jenkins-learning
 	url = https://github.com/nitinkc/jenkins-learning.git
+[submodule "terraform-concepts"]
+	path = terraform-concepts
+	url = https://github.com/nitinkc/terraform-concepts.git
