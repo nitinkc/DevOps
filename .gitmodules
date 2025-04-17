@@ -16,3 +16,6 @@
 [submodule "terraform-concepts"]
 	path = terraform-concepts
 	url = https://github.com/nitinkc/terraform-concepts.git
+[submodule "K8SHelloWorld"]
+	path = K8SHelloWorld
+	url = https://github.com/nitinkc/K8SHelloWorld.git
