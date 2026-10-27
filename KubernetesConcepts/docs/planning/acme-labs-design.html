@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acme Labs — GKE Platform Design</title>
+<style>
+:root{--navy:#1a4470;--green:#1f7a4d;--orange:#e8622a;--blue:#2c6aa3;--red:#c0392b;--bg:#f6f8fb;--ink:#1c2733;--mut:#5b6b7b;--card:#fff;--line:#d5dde6}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0e1b29;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em}
+.deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.slide{display:none;width:min(96vw,calc(92vh*16/9));aspect-ratio:16/9;background:var(--bg);border-radius:12px;padding:2.2% 3%;overflow:hidden;position:relative;font-size:clamp(9px,1.18vw,17px)}
+.slide.on{display:flex;flex-direction:column}
+h1{margin:0 0 .2em;font-size:2em;color:var(--navy);line-height:1.15}
+h2{margin:0;font-size:1.65em;color:var(--navy);line-height:1.15}
+.sub{color:var(--mut);margin:.25em 0 .8em;font-size:1em}
+.pill{display:inline-block;padding:.15em .7em;border-radius:99px;color:#fff;font-weight:700;font-size:.72em;letter-spacing:.04em;text-transform:uppercase}
+.grid{display:grid;gap:.9em;flex:1;min-height:0}
+.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:repeat(3,1fr)}.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:10px;padding:.7em .9em;min-height:0;overflow:hidden}
+.card h3{margin:.25em 0 .35em;font-size:1.05em;color:var(--navy)}
+.card ul{margin:.2em 0;padding-left:1.15em}.card li{margin:.18em 0}
+.g{border-color:var(--green);background:#eef7f1}.o{border-color:var(--orange);background:#fff4ee}.b{border-color:var(--navy);background:#eaf0f7}.r{border-color:var(--red);background:#fdf0ee}
+.navy{background:var(--navy);color:#fff;border-color:var(--navy)}.navy h3{color:#fff}
+.note{font-size:.9em;color:var(--mut)}.tag{font-weight:700;color:var(--orange)}
+table{border-collapse:collapse;width:100%;font-size:.92em}
+th,td{border-bottom:1px solid var(--line);padding:.35em .5em;text-align:left;vertical-align:top}
+th{background:var(--navy);color:#fff;font-weight:600}
+svg{width:100%;height:100%}
+svg text{font-family:Inter,system-ui,sans-serif}
+.foot{position:absolute;right:2.2%;bottom:1.6%;font-size:.75em;color:var(--mut)}
+.title{justify-content:center;background:linear-gradient(135deg,#12324f,#1a4470 60%,#2c6aa3);color:#fff}
+.title h1{color:#fff;font-size:3em}.title .sub{color:#cfe0f0;font-size:1.25em}
+.chain{display:flex;align-items:stretch;gap:.5em;flex-wrap:wrap}
+.step{flex:1;min-width:14%;background:#fff;border:2px solid var(--line);border-radius:10px;padding:.55em .65em;position:relative}
+.step b{display:block;color:var(--navy);margin-bottom:.2em}
+.arrow{align-self:center;font-size:1.6em;color:var(--mut)}
+.bar{position:fixed;left:0;right:0;bottom:6px;text-align:center;color:#8aa0b5;font-size:12px}
+@media print{html,body{background:#fff;height:auto}.deck{position:static;display:block}.slide{display:flex!important;page-break-after:always;width:100%;margin:0 0 8px;border-radius:0}.bar{display:none}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 1 -->
+<section class="slide title on">
+  <span class="pill" style="background:var(--orange);align-self:flex-start">Learning platform · GCP free tier</span>
+  <h1 style="margin-top:.5em">Acme Labs<br>One GKE cluster, three domains, enterprise-grade plumbing</h1>
+  <div class="sub">Hand-written Terraform networking · GitLab 3-tier groups · Workload Identity Federation · Flux + Helm · sidecars → central Cloud Logging</div>
+  <div class="note" style="color:#9fb8d0">Arrow keys / click to navigate · P to print · companion file: acme-labs-plan.md</div>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>What we are building, and what we are deliberately not</h2>
+  <div class="sub">Minimal footprint, maximum exposure to the hidden networking and identity mechanics</div>
+  <div class="grid c3">
+    <div class="card b"><h3>Build</h3><ul>
+      <li>1 private zonal GKE cluster (Dataplane V2)</li>
+      <li>3 domains: <b>orders</b> (Go), <b>payments</b> (Python), <b>inventory</b> (Node)</li>
+      <li>Per pod: app + Envoy + OTel collector + Fluent Bit</li>
+      <li>1 central log bucket, one Log Router sink</li>
+      <li>Custom VPC with real IPAM, 4 egress doors</li>
+      <li>GitLab CI → GCP via <b>no-key</b> federation</li>
+      <li>Flux + Helm for everything in-cluster</li></ul></div>
+    <div class="card g"><h3>Design principles</h3><ul>
+      <li>Terraform owns <b>GCP</b>; Flux owns <b>Kubernetes</b></li>
+      <li>Shared code lives in Tier 1 modules (versioned)</li>
+      <li>Secure by default: deny first, then open doors</li>
+      <li>Identities are <b>deterministic names</b>, not lookups</li>
+      <li>Build with training wheels, then remove them (P8)</li>
+      <li>Every phase ends with a predict-then-verify gate</li></ul></div>
+    <div class="card o"><h3>Not now (stretch menu)</h3><ul>
+      <li>Cloud SQL via PSA (100.64/20)</li>
+      <li>Hybrid HA VPN + NCC-style site</li>
+      <li>Per-domain node pools / Shared VPC</li>
+      <li>Consul contract bus + self-hosted runner</li>
+      <li>Cloud Storage / Firebase / Pub/Sub via Tier-1 modules</li></ul>
+      <div class="note" style="margin-top:.6em">Cost: a few $/day while up, ≈ $0 destroyed. Budget alarm first.</div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <h2>Decision: can ONE cluster serve three isolated domains?  <span class="tag">Yes.</span></h2>
+  <div class="sub">A cluster lives in one VPC — so isolation is layered, not VPC-per-domain. "3 VPNs" becomes 3 isolation domains.</div>
+  <div class="grid c2">
+    <div class="card"><table>
+      <tr><th>Layer</th><th>Mechanism</th><th>Stops</th></tr>
+      <tr><td>Cloud IAM</td><td>1 GSA per domain (Workload Identity)</td><td>Borrowing another domain's cloud rights</td></tr>
+      <tr><td>L3/L4</td><td>NetworkPolicy default-deny (Dataplane V2)</td><td>Un-listed pod→pod paths</td></tr>
+      <tr><td>L7 identity</td><td>Istio mTLS + AuthorizationPolicy (SPIFFE SA)</td><td>Right path, wrong caller</td></tr>
+      <tr><td>Capacity</td><td>ResourceQuota / LimitRange</td><td>Noisy neighbours</td></tr>
+      <tr><td>VPC (stretch)</td><td>Node pool per domain with its own pod range</td><td>Lets VPC firewalls see domains</td></tr>
+    </table></div>
+    <div class="grid" style="grid-template-rows:1fr 1fr">
+      <div class="card g"><h3>Why one cluster is right for the lab</h3><ul><li>Free-tier management-fee credit covers one zonal cluster</li><li>You still touch every network concept (ranges, NAT, routes, DNS, LB)</li><li>Three clusters would triple cost and teach little extra</li></ul></div>
+      <div class="card r"><h3>When you would need more</h3><ul><li>Hard regulatory network separation → separate clusters / Shared VPC with 3 subnets (S3, S6)</li><li>Different upgrade cadences or blast radius</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 architecture -->
+<section class="slide">
+  <h2>Target architecture (np)</h2>
+  <div class="sub">Everything inside one VPC <code>acme-main</code>; the control plane is reachable only from your admin /32</div>
+  <div style="flex:1;min-height:0">
+  <svg viewBox="0 0 1000 440" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5b6b7b"/></marker></defs>
+    <rect x="5" y="5" width="990" height="430" rx="12" fill="#fff" stroke="#1a4470" stroke-width="2"/>
+    <text x="20" y="28" font-size="14" font-weight="700" fill="#1a4470">GCP project my-devops-journey-502420 (np)</text>
+    <rect x="18" y="40" width="700" height="385" rx="10" fill="#eaf0f7" stroke="#1a4470"/>
+    <text x="30" y="60" font-size="13" font-weight="700" fill="#1a4470">VPC acme-main · custom mode · default route deleted at birth</text>
+    <rect x="30" y="70" width="676" height="300" rx="8" fill="#fff" stroke="#2c6aa3"/>
+    <text x="42" y="90" font-size="12" font-weight="700" fill="#2c6aa3">Subnet gke-main 10.10.0.0/24 · pods 10.20.0.0/20 · svcs 10.30.0.0/24 → GKE acme-np (private, zonal, Dataplane V2)</text>
+    <g font-size="11">
+      <rect x="42" y="100" width="210" height="190" rx="8" fill="#fff4ee" stroke="#e8622a" stroke-width="2"/><text x="52" y="118" font-weight="700" fill="#e8622a">ns dom-orders · Go</text>
+      <rect x="258" y="100" width="210" height="190" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="268" y="118" font-weight="700" fill="#1f7a4d">ns dom-payments · Python</text>
+      <rect x="474" y="100" width="222" height="190" rx="8" fill="#eaf0f7" stroke="#1a4470" stroke-width="2"/><text x="484" y="118" font-weight="700" fill="#1a4470">ns dom-inventory · Node</text>
+    </g>
+    <g font-size="10.5" text-anchor="middle">
+      <g id="pod1"><rect x="54" y="128" width="186" height="150" rx="6" fill="#fff" stroke="#8aa0b5" stroke-dasharray="4 3"/><text x="147" y="143" fill="#5b6b7b">Pod</text>
+        <rect x="62" y="150" width="82" height="28" rx="4" fill="#e8622a"/><text x="103" y="168" fill="#fff">app</text>
+        <rect x="150" y="150" width="82" height="28" rx="4" fill="#1a4470"/><text x="191" y="168" fill="#fff">istio-proxy</text>
+        <rect x="62" y="186" width="82" height="28" rx="4" fill="#2c6aa3"/><text x="103" y="204" fill="#fff">otel-collector</text>
+        <rect x="150" y="186" width="82" height="28" rx="4" fill="#1f7a4d"/><text x="191" y="204" fill="#fff">fluent-bit</text>
+        <text x="147" y="240" fill="#5b6b7b">GSA &lt;domain&gt;-app (WI)</text><text x="147" y="256" fill="#5b6b7b">default-deny + allows</text></g>
+      <use href="#pod1" x="216"/><use href="#pod1" x="432"/>
+    </g>
+    <rect x="42" y="300" width="654" height="58" rx="8" fill="#f6f8fb" stroke="#8aa0b5"/>
+    <text x="52" y="320" font-size="11" font-weight="700" fill="#1a4470">Platform namespaces (Flux-managed)</text>
+    <text x="52" y="340" font-size="11" fill="#5b6b7b">flux-system · istio-system (istiod) · gateway (gke-l7-rilb → proxy-only 10.10.254.0/23) · kube-system</text>
+    <rect x="30" y="378" width="330" height="38" rx="6" fill="#fff" stroke="#8aa0b5"/><text x="40" y="402" font-size="11" fill="#1c2733">Router + NAT (2 static IPs) · routes · private DNS zones</text>
+    <rect x="372" y="378" width="334" height="38" rx="6" fill="#fff" stroke="#8aa0b5"/><text x="382" y="402" font-size="11" fill="#1c2733">Firewall: IAP ssh · LB health · proxy→nodes · master→webhooks</text>
+    <!-- right services -->
+    <rect x="745" y="50" width="235" height="62" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="758" y="73" font-size="12" font-weight="700" fill="#1f7a4d">Cloud Logging</text><text x="758" y="92" font-size="11" fill="#1c2733">_Default → sink → central-app-logs</text>
+    <rect x="745" y="130" width="235" height="50" rx="8" fill="#fff" stroke="#2c6aa3" stroke-width="2"/><text x="758" y="152" font-size="12" font-weight="700" fill="#2c6aa3">Artifact Registry</text><text x="758" y="168" font-size="11" fill="#1c2733">apps + dockerhub-mirror</text>
+    <rect x="745" y="198" width="235" height="50" rx="8" fill="#fff" stroke="#2c6aa3" stroke-width="2"/><text x="758" y="220" font-size="12" font-weight="700" fill="#2c6aa3">Trace · Monitoring</text><text x="758" y="236" font-size="11" fill="#1c2733">via OTel googlecloud exporter</text>
+    <rect x="745" y="266" width="235" height="50" rx="8" fill="#fff4ee" stroke="#e8622a" stroke-width="2"/><text x="758" y="288" font-size="12" font-weight="700" fill="#e8622a">GitLab.com</text><text x="758" y="304" font-size="11" fill="#1c2733">Flux source · CI + OIDC (via NAT)</text>
+    <rect x="745" y="334" width="235" height="82" rx="8" fill="#f6f8fb" stroke="#8aa0b5"/><text x="758" y="356" font-size="12" font-weight="700" fill="#1a4470">GCS state buckets</text><text x="758" y="374" font-size="11" fill="#1c2733">np / p tfstate · versioned</text><text x="758" y="392" font-size="11" fill="#1c2733">Prod project: state + SAs only</text>
+    <g stroke="#5b6b7b" stroke-width="1.6" fill="none" marker-end="url(#a)">
+      <path d="M706 140 L745 82"/><path d="M706 175 L745 155"/><path d="M706 215 L745 222"/><path d="M706 280 L745 290"/>
+    </g>
+  </svg></div>
+</section>
+
+<!-- 5 gitlab -->
+<section class="slide">
+  <h2>GitLab 3-tier layout — folder path is a permission boundary</h2>
+  <div class="sub">Same shape as the corporate model, learning names. Variables and federation trust inherit from the root group.</div>
+  <div class="card navy" style="margin-bottom:.7em"><h3>Root group: gitlab.com/acme-labs-&lt;handle&gt;</h3>
+    <div style="font-size:.95em">Automatic inheritance bus: WIF identity (<code>attribute.root_group</code>) · group CI variables (<code>WIF_PROVIDER</code>, <code>SA_NP</code>, state buckets) · protected-only prod variables</div></div>
+  <div class="grid c3">
+    <div class="card b"><span class="pill" style="background:var(--navy)">Tier 1 · Platform</span><h3>platform/*</h3><ul class="mono"><li>bootstrap</li><li>network</li><li>gke-platform</li><li>observability</li><li>terraform-modules ★</li><li>ci-templates ★</li><li>contract-bus (S4)</li></ul><div class="note">★ shared code lives here — never copied downstream. Analogy: the power grid & roads</div></div>
+    <div class="card g"><span class="pill" style="background:var(--green)">Tier 2 · Shared + GitOps</span><h3>domain-shared/*</h3><ul class="mono"><li>shared-services (SQL, Pub/Sub later)</li><li>configurations/helm-charts</li><li>configurations/flux-releases</li></ul><div class="note">Analogy: shared utilities & blueprints</div></div>
+    <div class="card o"><span class="pill" style="background:var(--orange)">Tier 3 · Applications</span><h3>applications/&lt;domain&gt;</h3><ul class="mono"><li>orders/ → orders-svc, orders-infra</li><li>payments/ → payments-svc, payments-infra</li><li>inventory/ → inventory-svc, inventory-infra</li></ul><div class="note"><code>AR_REPO</code> variables exist <b>only</b> here. Analogy: individual storefronts</div></div>
+  </div>
+  <div class="card r" style="margin-top:.7em"><b>Hands-on proof:</b> create a repo outside <code>applications/</code> → image push fails (variable not inherited). Create a project outside the root group → WIF attribute condition rejects the token.</div>
+</section>
+
+<!-- 6 identity -->
+<section class="slide">
+  <h2>Identity: GitLab → GCP with no keys, three trust levels</h2>
+  <div class="sub">Trust is encoded in a CEL attribute mapping — the "protected main only" rule lives in Google, not GitLab</div>
+  <div class="chain">
+    <div class="step"><b>1 · GitLab job</b>id_tokens → signed OIDC JWT (claims: project_path, ref, ref_protected)</div><div class="arrow">→</div>
+    <div class="step"><b>2 · STS</b>Workload Identity Pool <code>gitlab-pool</code> + provider checks issuer & attribute condition</div><div class="arrow">→</div>
+    <div class="step"><b>3 · Impersonate</b>principalSet must hold <code>workloadIdentityUser</code> on the target SA</div><div class="arrow">→</div>
+    <div class="step"><b>4 · Terraform</b>short-lived token via ADC; GCS backend + providers</div>
+  </div>
+  <div class="card" style="margin-top:.8em"><table>
+    <tr><th>Service account</th><th>Project</th><th>Who can impersonate (principalSet)</th><th>Power</th></tr>
+    <tr><td class="mono">pipeline-np</td><td>np</td><td class="mono">root_group = acme-labs-…</td><td>Edit + IAM admin (any branch)</td></tr>
+    <tr><td class="mono">pipeline-p-ro</td><td>prod</td><td class="mono">root_group = acme-labs-…</td><td>Viewer — feature branches get a read-only plan</td></tr>
+    <tr><td class="mono">pipeline-p</td><td>prod</td><td class="mono">root_group_ref = acme-labs-…:main:true</td><td>Edit — <b>protected main only</b></td></tr>
+  </table></div>
+  <div class="card g" style="margin-top:.7em"><b>No Organization?</b> A personal Google account has no folders or org policies, so the "corporate folder" level is modelled by two <b>projects</b> (np, p). With an org, add <code>google_folder</code> and the same SAs move to folder-level IAM.</div>
+</section>
+
+<!-- 7 IPAM -->
+<section class="slide">
+  <h2>IPAM: four kinds of address space, four different reasons</h2>
+  <div class="sub">Decide the table before writing Terraform — pod/service ranges are hard to change later</div>
+  <div class="grid c2">
+    <div class="card b"><span class="pill" style="background:var(--navy)">1 · Primary / routable</span><h3>Nodes 10.10.0.0/24 · ops 10.10.1.0/28 · master 10.10.250.0/28</h3><ul><li>The only space you'd ever advertise to on-prem/VPN</li><li>Must never overlap anything you may later connect</li><li>Master range: mandatory /28 for the private control plane</li></ul></div>
+    <div class="card" style="border-color:var(--blue)"><span class="pill" style="background:var(--blue)">2 · Pods &amp; Services</span><h3>gke-pods 10.20.0.0/20 · gke-svcs 10.30.0.0/24</h3><ul><li>Secondary ranges on <code>gke-main</code> (VPC-native alias IPs)</li><li><code>max_pods_per_node=64</code> → /25 per node → up to 32 nodes</li><li>Hybrid: pod IPs unknown to on-prem → masquerade (S2)</li></ul></div>
+    <div class="card g"><span class="pill" style="background:var(--green)">3 · Private Services Access</span><h3>100.64.0.0/20 (stretch S1)</h3><ul><li>Peered range for Cloud SQL via servicenetworking</li><li>RFC 6598 space: doesn't burn scarce 10.x</li><li>Peering is <b>non-transitive</b></li></ul></div>
+    <div class="card o"><span class="pill" style="background:var(--orange)">4 · Proxy-only</span><h3>proxy-only-subnet 10.10.254.0/23</h3><ul><li><code>purpose = REGIONAL_MANAGED_PROXY</code></li><li>Google's Envoy fleet for internal L7 LBs / <code>gke-l7-rilb</code></li><li>Your VMs/pods never get an IP from it — but firewalls must allow it to your nodes</li></ul></div>
+  </div>
+</section>
+
+<!-- 8 doors -->
+<section class="slide">
+  <h2>Why the default internet route is deleted — and the four outbound doors</h2>
+  <div class="sub">Lab: start with a "training wheels" default route, then remove it (P8) and repair every break</div>
+  <div class="grid" style="grid-template-columns:30% 1fr">
+    <div class="card b" style="display:flex;flex-direction:column;gap:.5em">
+      <h3>VPC acme-main</h3><ul><li>GKE nodes &amp; pods</li><li>probe VM (ops)</li></ul>
+      <div class="card r" style="padding:.5em .6em"><b>DELETED ON CREATE</b><br><code>0.0.0.0/0 → default-internet-gateway</code><br>Unknown IP ⇒ packet dropped (no route)</div>
+      <div class="note">Most-specific prefix wins; tags scope which instances a route applies to.</div>
+    </div>
+    <div style="display:grid;grid-template-rows:repeat(4,1fr);gap:.55em;min-height:0">
+      <div class="card g"><span class="pill" style="background:var(--green)">Door 1 · Google APIs</span> <b>PGA + private VIP</b><br><span class="note">Subnet <code>private_ip_google_access=true</code> + route <code>199.36.153.8/30</code> + private DNS (<code>*.googleapis.com / gcr.io / pkg.dev → private.googleapis.com</code>). Logging, GCS, Artifact Registry.</span></div>
+      <div class="card b"><span class="pill" style="background:var(--navy)">Door 2 · /32 allow-list</span> <b>Explicit routes, priority 900</b><br><span class="note">One <code>inet-&lt;name&gt;</code> route per approved external IP (map variable <code>vip_allowlist</code>).</span></div>
+      <div class="card o"><span class="pill" style="background:var(--orange)">Door 3 · Cloud NAT + tag</span> <b>Route prio 999 for tag <code>allowed-open-nat</code></b><br><span class="note">Two static NAT IPs so partners can allow-list you. NAT only translates traffic whose next hop is the internet gateway. Tags are node-level — pods inherit.</span></div>
+      <div class="card" style="border-color:var(--blue)"><span class="pill" style="background:var(--blue)">Door 4 · Hybrid (stretch S2)</span> <b>HA VPN + Cloud Router → <code>onprem-sim</code> VPC</b><br><span class="note">BGP routes, DNS peering, <code>ip-masq-agent</code> for pod traffic. Stands in for NCC/on-prem.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 sidecars -->
+<section class="slide">
+  <h2>Sidecars → one central Cloud Logging</h2>
+  <div class="sub">Three delivery patterns for the same goal; one Log Router sink collects the three domains</div>
+  <div style="flex:1;min-height:0">
+  <svg viewBox="0 0 1000 400" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5b6b7b"/></marker></defs>
+    <rect x="10" y="10" width="360" height="380" rx="10" fill="#fff" stroke="#8aa0b5" stroke-dasharray="5 4"/><text x="25" y="35" font-size="14" font-weight="700" fill="#1a4470">Pod (one per domain)</text>
+    <g font-size="12" fill="#fff" text-anchor="middle">
+      <rect x="30" y="55" width="150" height="60" rx="6" fill="#e8622a"/><text x="105" y="80">app</text><text x="105" y="98" font-size="10">JSON stdout + /var/log/app</text>
+      <rect x="200" y="55" width="150" height="60" rx="6" fill="#1a4470"/><text x="275" y="80">istio-proxy</text><text x="275" y="98" font-size="10">mTLS · JSON access log</text>
+      <rect x="30" y="150" width="150" height="60" rx="6" fill="#2c6aa3"/><text x="105" y="175">otel-collector</text><text x="105" y="193" font-size="10">OTLP → googlecloud</text>
+      <rect x="200" y="150" width="150" height="60" rx="6" fill="#1f7a4d"/><text x="275" y="175">fluent-bit</text><text x="275" y="193" font-size="10">tail file → stackdriver</text>
+    </g>
+    <rect x="30" y="235" width="320" height="40" rx="6" fill="#f6f8fb" stroke="#8aa0b5"/><text x="190" y="260" font-size="11" text-anchor="middle" fill="#1c2733">emptyDir shared volume (app ⇄ fluent-bit)</text>
+    <text x="25" y="310" font-size="11" fill="#5b6b7b">Auth to Cloud Logging API: Workload Identity</text>
+    <text x="25" y="326" font-size="11" fill="#5b6b7b">KSA → GSA (logging.logWriter, trace.agent)</text>
+    <text x="25" y="342" font-size="11" fill="#5b6b7b">Needs egress to metadata server 169.254.169.252:988</text>
+    <text x="25" y="358" font-size="11" fill="#5b6b7b">+ Google APIs (Door 1) when default-deny is on</text>
+    <rect x="430" y="40" width="190" height="56" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="525" y="64" text-anchor="middle" font-size="12" font-weight="700" fill="#1f7a4d">Pattern A</text><text x="525" y="82" text-anchor="middle" font-size="11">stdout → GKE node agent</text>
+    <rect x="430" y="150" width="190" height="56" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="525" y="174" text-anchor="middle" font-size="12" font-weight="700" fill="#1f7a4d">Pattern B</text><text x="525" y="192" text-anchor="middle" font-size="11">file-tail sidecar → API</text>
+    <rect x="430" y="260" width="190" height="56" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="525" y="284" text-anchor="middle" font-size="12" font-weight="700" fill="#1f7a4d">Pattern C</text><text x="525" y="302" text-anchor="middle" font-size="11">OTLP sidecar → logs/traces/metrics</text>
+    <rect x="690" y="95" width="290" height="70" rx="8" fill="#fff" stroke="#2c6aa3" stroke-width="2"/><text x="705" y="120" font-size="13" font-weight="700" fill="#2c6aa3">Cloud Logging · _Default</text><text x="705" y="140" font-size="11">exclusion for ^dom- (avoid double storage)</text>
+    <rect x="690" y="195" width="290" height="90" rx="8" fill="#fff4ee" stroke="#e8622a" stroke-width="2"/><text x="705" y="220" font-size="13" font-weight="700" fill="#e8622a">Log Router sink → central-app-logs</text><text x="705" y="240" font-size="11">filter: k8s_container ∧ namespace =~ ^dom-</text><text x="705" y="258" font-size="11">30d retention · Log Analytics (SQL) on</text><text x="705" y="274" font-size="11">log-based metric: domain_errors{domain}</text>
+    <g stroke="#5b6b7b" stroke-width="1.6" fill="none" marker-end="url(#b)">
+      <path d="M180 85 L430 68"/><path d="M350 85 L430 75"/><path d="M350 180 L430 178"/><path d="M180 180 L430 288"/>
+      <path d="M620 68 L690 120"/><path d="M620 178 L690 235"/><path d="M620 288 L690 260"/>
+    </g>
+  </svg></div>
+</section>
+
+<!-- 10 call graph -->
+<section class="slide">
+  <h2>Domains talk to each other — only the way you allow</h2>
+  <div class="sub">Two independent guards; each fails with a different signature (timeout vs 403)</div>
+  <div class="grid c2">
+    <div class="card" style="padding:0"><svg viewBox="0 0 480 330" xmlns="http://www.w3.org/2000/svg">
+      <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1f7a4d"/></marker></defs>
+      <rect x="15" y="130" width="100" height="56" rx="8" fill="#eaf0f7" stroke="#1a4470" stroke-width="2"/><text x="65" y="152" text-anchor="middle" font-size="12" font-weight="700" fill="#1a4470">Internal</text><text x="65" y="168" text-anchor="middle" font-size="12" font-weight="700" fill="#1a4470">Gateway</text>
+      <rect x="170" y="130" width="120" height="56" rx="8" fill="#fff4ee" stroke="#e8622a" stroke-width="2"/><text x="230" y="154" text-anchor="middle" font-size="13" font-weight="700" fill="#e8622a">orders (Go)</text><text x="230" y="171" text-anchor="middle" font-size="10">dom-orders</text>
+      <rect x="350" y="40" width="120" height="56" rx="8" fill="#eef7f1" stroke="#1f7a4d" stroke-width="2"/><text x="410" y="64" text-anchor="middle" font-size="13" font-weight="700" fill="#1f7a4d">payments (Py)</text><text x="410" y="81" text-anchor="middle" font-size="10">dom-payments</text>
+      <rect x="350" y="220" width="120" height="56" rx="8" fill="#eaf0f7" stroke="#1a4470" stroke-width="2"/><text x="410" y="244" text-anchor="middle" font-size="13" font-weight="700" fill="#1a4470">inventory (Node)</text><text x="410" y="261" text-anchor="middle" font-size="10">dom-inventory</text>
+      <g stroke="#1f7a4d" stroke-width="2" fill="none" marker-end="url(#c)"><path d="M115 158 L170 158"/><path d="M290 145 L350 80"/><path d="M290 172 L350 238"/></g>
+      <path d="M410 100 L410 216" stroke="#c0392b" stroke-width="2.5" stroke-dasharray="6 4" fill="none"/>
+      <circle cx="410" cy="158" r="15" fill="#c0392b"/><text x="410" y="164" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">×</text>
+      <text x="240" y="310" text-anchor="middle" font-size="11" fill="#5b6b7b">payments ↔ inventory: denied by design</text>
+    </svg></div>
+    <div class="grid" style="grid-template-rows:1fr 1fr 1fr">
+      <div class="card b"><h3>Guard 1 · NetworkPolicy (L3/4)</h3>default-deny both directions + explicit allows. Egress must also allow DNS, istiod (15012), GKE metadata server (169.254.169.252:988) — or Workload Identity silently breaks.</div>
+      <div class="card g"><h3>Guard 2 · Istio AuthorizationPolicy (L7)</h3>payments accepts only <code>cluster.local/ns/dom-orders/sa/orders</code> over STRICT mTLS. Failure signature: <b>HTTP 403 (RBAC)</b>.</div>
+      <div class="card o"><h3>Why both</h3>Network path ≠ caller identity. Remove guard 1 and test: you now see guard 2 alone — and learn to read each layer's error.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 flux order -->
+<section class="slide">
+  <h2>Flux + Helm: implementation order and why</h2>
+  <div class="sub">Kustomization <code>dependsOn</code> + <code>wait: true</code> build the layers; nothing is applied by hand after bootstrap</div>
+  <div class="chain">
+    <div class="step"><b>0 · Cluster (Terraform)</b>nodes Ready, kubectl works from admin /32</div><div class="arrow">→</div>
+    <div class="step"><b>1 · flux bootstrap</b>→ flux-releases repo, path clusters/np</div><div class="arrow">→</div>
+    <div class="step"><b>2 · infra-controllers</b>Sources → istio-base (CRDs) → istiod (webhook healthy)</div><div class="arrow">→</div>
+    <div class="step"><b>3 · infra-configs</b>Namespaces (injection label), mTLS STRICT, default-deny, quotas, gateway</div><div class="arrow">→</div>
+    <div class="step"><b>4 · apps</b>3 HelmReleases from OCI chart <code>acme-microservice</code></div>
+  </div>
+  <div class="grid c2" style="margin-top:.8em">
+    <div class="card"><h3>Why this order</h3><ul><li>CRDs before CRs; webhook before pods — or sidecars silently don't inject</li><li>Namespace label must pre-exist the first pod</li><li>Security baseline lands before any workload</li></ul></div>
+    <div class="card"><h3>Terraform ⇄ Flux handshake</h3><ul><li>TF creates GSA <code>orders-app</code> + WI binding for <code>dom-orders/orders</code></li><li>Chart annotates the KSA with that same predictable email</li><li>CI never touches the Kubernetes API → control plane stays locked down</li><li>Images: CI → Artifact Registry → tag bump commit → Flux</li></ul></div>
+  </div>
+</section>
+
+<!-- 12 roadmap -->
+<section class="slide">
+  <h2>Roadmap with readiness gates</h2>
+  <div class="sub">Each gate = predict the outcome first, then verify. Roughly 5–7 weeks at several hours/week.</div>
+  <div class="card" style="overflow:auto"><table>
+    <tr><th>Phase</th><th>What</th><th>Hidden nuance revealed</th><th>Gate</th></tr>
+    <tr><td>P0–P1</td><td>Groups, bootstrap (projects, state, WIF, SAs)</td><td>Attribute mapping = trust boundary</td><td>G1</td></tr>
+    <tr><td>P2</td><td>CI templates; prod blocked from feature branches</td><td>Protected-ref federation</td><td>G2</td></tr>
+    <tr><td>P3</td><td>Network v1: IPAM, routes, NAT, DNS, firewall</td><td>NAT needs IGW next hop; tags are node-level</td><td>G3</td></tr>
+    <tr><td>P4</td><td>Private GKE, node SA, Artifact Registry + mirror</td><td>Private endpoint vs authorized networks</td><td>G4</td></tr>
+    <tr><td>P5</td><td>Flux bootstrap, Istio via dependsOn</td><td>Webhook ordering, master→node ports</td><td>G5</td></tr>
+    <tr><td>P6</td><td>Central log bucket, sink, sidecar configs</td><td>Three log delivery patterns</td><td>G6</td></tr>
+    <tr><td>P7</td><td>3 domains: chart, infra modules, policies</td><td>Default-deny breaks WI/DNS/xDS</td><td>G7</td></tr>
+    <tr><td>P8</td><td>Delete default route; repair each flow</td><td>Which door each packet really uses</td><td>G8</td></tr>
+    <tr><td>P9</td><td>Internal Gateway (proxy-only subnet)</td><td>STRICT mTLS vs LB plaintext, health-check ranges</td><td>G9</td></tr>
+    <tr><td>P10</td><td>Stretch: PSA/Cloud SQL, hybrid VPN, pool-per-domain, Consul …</td><td>PSA non-transitive, masquerade</td><td>—</td></tr>
+  </table></div>
+</section>
+
+<!-- 13 extend -->
+<section class="slide">
+  <h2>Growing the platform later without copy-paste</h2>
+  <div class="sub">Add Cloud Storage, Firebase, Pub/Sub, Cloud SQL as Tier-1 modules consumed at Tier 3</div>
+  <div class="grid c3">
+    <div class="card b"><h3>1 · Write once (Tier 1)</h3><ul><li><code>terraform-modules/modules/gcs-bucket</code></li><li>Secure defaults baked in (uniform access, public-access prevention)</li><li>Release a tag: <code>v0.2.0</code></li></ul></div>
+    <div class="card o"><h3>2 · Consume (Tier 3)</h3><ul><li><code>module "uploads" { source = "...//modules/gcs-bucket?ref=v0.2.0" }</code></li><li>Grant the domain GSA writer access</li><li>State is per project — blast radius stays small</li></ul></div>
+    <div class="card g"><h3>3 · Wire to the app</h3><ul><li>Deterministic bucket name into HelmRelease values</li><li>Workload Identity already gives the pod access</li><li>Update NetworkPolicy/doors only if a new destination appears</li></ul></div>
+  </div>
+  <div class="card r" style="margin-top:.8em"><b>Hidden-nuance checklist</b> (tick only what you've <i>observed</i>): NAT/IGW next hop · PGA vs private VIP · node-level tags · master→webhook ports · secondary-range sizing · proxy-only subnet firewalls · health-check ranges · default-deny breaks WI · STRICT mTLS vs plaintext · NAT port exhaustion · PSA non-transitive · create-time route deletion · WIF attribute conditions</div>
+</section>
+
+</div>
+<div class="bar" id="bar"></div>
+<script>
+const s=[...document.querySelectorAll('.slide')];let i=0;
+function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((x,k)=>x.classList.toggle('on',k===i));document.getElementById('bar').textContent=(i+1)+' / '+s.length;history.replaceState(null,'','#'+(i+1))}
+document.addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}else if(['ArrowLeft','PageUp'].includes(e.key)){show(i-1)}else if(e.key==='Home')show(0);else if(e.key==='End')show(s.length-1);else if(e.key==='p')window.print()});
+document.addEventListener('click',e=>{show(e.clientX>innerWidth/2?i+1:i-1)});
+show((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+# Maven/Java build output
+spring-boot-app/target/
+**/target/
+
+# IDE settings
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# Maven wrapper downloads
+spring-boot-app/.mvn/wrapper/maven-wrapper.jar
+
+# Additional ignores
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# IntelliJ
+/.idea/
+
+# VS Code
+.vscode/
+
+# Docker
+docker/**/data
+**/docker/*/data
+
+# Postman
+*.postman_collection.json
+
+# Env
+.env
+
+.venv/
+site/

@@ -1,0 +1,108 @@
+site_name: Acme Labs — K8s Platform Playbook
+site_description: Hands-on Docker, Minikube & GKE platform engineering labs (network-first, diagram-driven)
+docs_dir: docs
+
+theme:
+  name: material
+  features:
+    # Navigation
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top           # Back-to-top button
+    - navigation.footer        # Prev/Next page links
+    # Search
+    - search.suggest
+    - search.highlight
+    - search.share
+    # Content
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+plugins:
+  - search:
+      lang: en
+  - mkdocs_quiz
+  - mermaid2
+  # mkdocs-glightbox auto-registers once installed — no explicit entry needed
+  # (listing it here would produce a "specified multiple times" warning)
+  - glightbox
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      use_pygments: true
+      guess_lang: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - toc:
+      permalink: true
+      title: On this page
+  - abbr
+  - attr_list
+  - md_in_html
+  - pymdownx.snippets:
+      base_path: docs
+  - tables
+
+nav:
+  - Home: index.md
+  - Reference & Cheat Sheets:
+    - 00 · Architecture Decisions (ADRs): reference/00-architecture-decisions.md
+    - 01 · CLI Command Cheat Sheet: reference/01-command-cheatsheet.md
+    - 02 · Failure Signatures & Triage: reference/02-failure-triage-matrix.md
+    - 03 · Local-to-GCP Rosetta Stone: reference/03-gcp-rosetta-stone.md
+  - Part A · Underlay & Cluster:
+    - Lab 01 · Docker VPC, Routing & Firewall: labs/lab-01-docker-underlay-routing.md
+    - Lab 02 · Minikube IPAM & Cilium eBPF: labs/lab-02-minikube-ipam-cilium.md
+  - Part B · Workloads & Egress:
+    - Lab 03 · Services, DNS & App Packaging: labs/lab-03-services-dns-packaging.md
+    - Lab 04 · Egress & The 4 Outbound Doors: labs/lab-04-egress-four-doors.md
+  - Part C · Zero-Trust Security:
+    - Lab 05 · L3/L4 NetworkPolicy & Hubble: labs/lab-05-l3-l4-network-policy.md
+    - Lab 06 · L7 Istio mTLS & SPIFFE AuthZ: labs/lab-06-l7-istio-mtls-authz.md
+  - Part D · Observe, Enter & GitOps:
+    - Lab 07 · 4-Container Pod & Central Logs: labs/lab-07-sidecars-central-logging.md
+    - Lab 08 · North-South Ingress Gauntlet: labs/lab-08-ingress-metallb-gateway.md
+    - Lab 09 · FluxCD GitOps Ordering: labs/lab-09-gitops-flux-ordering.md
+  - Part E · Production Handoff:
+    - Lab 10 · Cold Rebuild & GKE Handoff: labs/lab-10-cold-rebuild-gke-handoff.md
+  - Planning (Original Docs):
+    - GKE Platform Plan (P0–P10): planning/acme-labs-plan.md
+    - Minikube Learning Plan (S0–S12): planning/acme-labs-minikube-learning-plan.md
+    - kind Practice Lab (K1–K11): planning/acme-labs-k8s-on-docker-practice.md
+    - Design Deck (HTML): planning/design-deck.md

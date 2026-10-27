@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  selector:
+    matchLabels:
+      app: frontend-ui # <--- Must match template labels exactly!
+  template:
+    metadata:
+      labels:
+        app: frontend-ui  # <--- Must match selector.matchLabels exactly!
+    spec:
+      containers:
+        - name: frontend
+          image: nitinkc/k8s-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BACKEND_URL
+              value: "http://go-backend-service:80" # Kubernetes internal DNS routes this straight to the Go backend service
+              # Should Match the metadata.name of your backend service
+  replicas: 6

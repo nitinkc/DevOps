@@ -1,0 +1,43 @@
+<mxfile host="Electron">
+  <diagram id="isolation" name="ADR-Cluster-Isolation">
+    <mxGraphModel dx="1400" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="ADR-01 — Can one cluster serve three isolated domains? Yes, with layered zero-trust" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="800" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="opta" value="&lt;b&gt;Option A — 1 cluster, 3 isolated domains&lt;/b&gt;  ✔ CHOSEN" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=3;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="420" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1" value="&lt;b&gt;Cloud IAM&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;1 GSA per domain via Workload Identity&lt;br/&gt;stops: borrowing cloud permissions&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="opta">
+          <mxGeometry x="20" y="50" width="380" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" value="&lt;b&gt;L3/L4 · Cilium NetworkPolicy&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;default-deny per namespace&lt;br/&gt;stops: unlisted pod→pod paths&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="opta">
+          <mxGeometry x="20" y="126" width="380" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" value="&lt;b&gt;L7 identity · Istio mTLS + AuthZ&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;SPIFFE SA identity, STRICT mTLS&lt;br/&gt;stops: right path, wrong caller&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="opta">
+          <mxGeometry x="20" y="202" width="380" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" value="&lt;b&gt;Capacity · ResourceQuota / LimitRange&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;stops: noisy neighbours&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="opta">
+          <mxGeometry x="20" y="278" width="380" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="optb" value="&lt;b&gt;Option B — 3 clusters in 3 VPCs&lt;/b&gt;  (only when regulation demands)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="540" y="60" width="420" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="b1" value="cluster: orders&lt;br/&gt;+ own VPC, nodes,&lt;br/&gt;istiod, flux" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;" vertex="1" parent="optb">
+          <mxGeometry x="20" y="60" width="120" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="b2" value="cluster: payments&lt;br/&gt;+ own VPC, nodes,&lt;br/&gt;istiod, flux" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;" vertex="1" parent="optb">
+          <mxGeometry x="150" y="60" width="120" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="b3" value="cluster: inventory&lt;br/&gt;+ own VPC, nodes,&lt;br/&gt;istiod, flux" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;" vertex="1" parent="optb">
+          <mxGeometry x="280" y="60" width="120" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="bn" value="&lt;font style=&quot;font-size:9px&quot;&gt;cost: 3× control planes, 3× idle headroom&lt;br/&gt;east-west needs peering / PSC / NCC&lt;br/&gt;&lt;b&gt;switch when:&lt;/b&gt; regulatory CDE isolation,&lt;br/&gt;separate upgrade cadence / blast radius&lt;br/&gt;&lt;b&gt;middle ground:&lt;/b&gt; per-domain node pools&lt;br/&gt;with dedicated pod secondary ranges&lt;/font&gt;" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#7a1f1f;align=left;" vertex="1" parent="optb">
+          <mxGeometry x="20" y="170" width="380" height="160" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

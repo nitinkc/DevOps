@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: go-server-replicaset
+  labels:
+    app: nitin-go-server
+    type: back-end
+spec:
+  template:
+    metadata:
+      name: pod-go-server
+      labels:
+        app: nitin-go-server
+        type: back-end
+    spec:
+      containers:
+        - name: go-k8s-server # Runs on port 8080 as per the code
+          image: nitinkc/go-k8s-server:latest
+          imagePullPolicy: Always
+  replicas: 3
+  selector:
+    matchLabels:
+      type: back-end

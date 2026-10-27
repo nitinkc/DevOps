@@ -1,0 +1,61 @@
+<mxfile host="Electron">
+  <diagram id="telemetry3" name="ADR-Telemetry-Patterns">
+    <mxGraphModel dx="1400" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="ADR-04 — Three telemetry patterns, three different trade-offs" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="700" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="pod" value="&lt;b&gt;Pod — shared netns + volumes&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="360" height="340" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="&lt;b&gt;app&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;stdout + file + OTLP&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="20" y="50" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="proxy" value="&lt;b&gt;istio-proxy&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;access log → stdout&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="200" y="50" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="fb" value="&lt;b&gt;fluent-bit&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;file tail sidecar&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="20" y="150" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="otel" value="&lt;b&gt;otel-collector&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;OTLP :4318&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="200" y="150" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dir" value="emptyDir&lt;br/&gt;/var/log/app" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="110" y="240" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="pa" value="&lt;b&gt;Pattern A — stdout → node agent&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;kubelet → /var/log/containers → node daemonset&lt;br/&gt;✔ zero pod cost, survives egress lockdown&lt;br/&gt;✗ node SA identity (not pod), node-disk noisy neighbor&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="480" y="60" width="400" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="pb" value="&lt;b&gt;Pattern B — file-tail sidecar → API&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;shared emptyDir + fluent-bit&lt;br/&gt;✔ legacy apps that only log to files; pod Workload Identity&lt;br/&gt;✗ ~32Mi/pod; BREAKS under default-deny egress (needs hole)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="480" y="180" width="400" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="pc" value="&lt;b&gt;Pattern C — OTLP sidecar&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;app → 127.0.0.1:4318 → batch/export&lt;br/&gt;✔ vendor-neutral swap (debug → googlecloud = 1 line)&lt;br/&gt;✗ ~64Mi/pod; needs egress hole to backend&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="400" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="logs" value="&lt;b&gt;Central logging&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;local: log-aggregator&lt;br/&gt;GCP: sink → central-app-logs&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="960" y="160" width="160" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_a" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;" edge="1" source="pa" target="logs" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_b" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;strokeWidth=2;" edge="1" source="pb" target="logs" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_c" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" edge="1" source="pc" target="logs" parent="1" >
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_pod_a" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;" edge="1" source="app" target="pa" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_pod_b" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;strokeWidth=2;dashed=1;" edge="1" source="fb" target="pb" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_pod_c" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;" edge="1" source="otel" target="pc" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

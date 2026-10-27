@@ -1,0 +1,64 @@
+<mxfile host="Electron">
+  <diagram id="guards" name="Lab06-Mesh-Guards">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="680" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Lab 06 — Two guards, two failure signatures: network path ≠ caller identity" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="800" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="dord" value="&lt;b&gt;dom-orders&lt;/b&gt; — allowed by L4 NetworkPolicy" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="280" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="ord" value="&lt;b&gt;orders&lt;/b&gt; (legitimate)&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;SA: orders&lt;br/&gt;SPIFFE: cluster.local/ns/dom-orders/sa/orders&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dord">
+          <mxGeometry x="20" y="50" width="240" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="intr" value="&lt;b&gt;intruder&lt;/b&gt; (compromised neighbor)&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;SA: intruder — same namespace,&lt;br/&gt;same network path, WRONG identity&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dord">
+          <mxGeometry x="20" y="150" width="240" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="dflt" value="&lt;b&gt;default ns&lt;/b&gt; — no sidecar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="420" width="280" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="plain" value="&lt;b&gt;plain&lt;/b&gt; — no Envoy, no cert&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;speaks plaintext HTTP only&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dflt">
+          <mxGeometry x="20" y="50" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dpay" value="&lt;b&gt;dom-payments&lt;/b&gt; — protected by L4 + L7 guards" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="480" y="100" width="640" height="280" as="geometry"/>
+        </mxCell>
+        <mxCell id="g1" value="&lt;b&gt;G1 · Cilium NetworkPolicy (L3/L4)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;checks: src namespace + pod port 8080&lt;br/&gt;fail signature: TIMEOUT&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dpay">
+          <mxGeometry x="20" y="55" width="190" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="g2" value="&lt;b&gt;G2 · PeerAuthentication STRICT&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;checks: valid mTLS X.509 from istiod CA&lt;br/&gt;fail signature: CONNECTION RESET&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dpay">
+          <mxGeometry x="225" y="55" width="195" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="g3" value="&lt;b&gt;G3 · AuthorizationPolicy&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;checks: SPIFFE principal in ALLOW list&lt;br/&gt;fail signature: HTTP 403 RBAC denied&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="dpay">
+          <mxGeometry x="435" y="55" width="185" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="&lt;b&gt;payments&lt;/b&gt; app :8080&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;+ istio-proxy sidecar&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;" vertex="1" parent="dpay">
+          <mxGeometry x="225" y="170" width="195" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="g12" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="g1" target="g2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="g23" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="g2" target="g3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="g3a" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="g3" target="app" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_ord" value="passes all 3 → HTTP 200" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2e7d32;strokeWidth=3;fontSize=9;" edge="1" source="ord" target="g1" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_intr" value="passes G1+G2, blocked G3 → 403" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;strokeWidth=2;dashed=1;fontSize=9;fontColor=#b85450;" edge="1" source="intr" target="g3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_plain" value="passes G1 (if opened), blocked G2 → reset" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;strokeWidth=2;dashed=1;fontSize=9;fontColor=#b85450;" edge="1" source="plain" target="g2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="memo" value="&lt;b&gt;Also in this lab:&lt;/b&gt; default-deny egress blocks sidecar → istiod:15012 xDS → pods stuck 1/2 Ready · sidecar injection happens at pod CREATION (rollout restart needed after ns label)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="480" y="420" width="640" height="60" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

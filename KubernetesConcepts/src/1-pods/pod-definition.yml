@@ -1,0 +1,28 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: pod-go-server
+  labels:
+    app: nitin-go-server
+    type: back-end
+
+spec:
+  initContainers: # Run before any regular containers start.
+    - name: init-container
+      image: busybox:latest
+      command: ["sh","-c", "echo 'Initalization started ...'; sleep 10; echo 'Initization completed.'"]
+
+  containers:
+    - name: go-k8s-server # Runs on port 8080 as per the code
+      image: nitinkc/go-k8s-server:v1.0.8
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 8080 # BEWARE of th TRAP : merely metadata to inform cluster operators and tools (like network policies) which port your app uses.
+        # Does not force the default port to be changed from this tag.
+
+    - name: nginx-container
+      # container image provides everything
+      # required to run a high-performance web server immediately without configuring an underlying operating system
+      image: nginx
+      ports:
+        - containerPort: 80

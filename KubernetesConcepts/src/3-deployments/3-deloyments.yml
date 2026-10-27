@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-server-deployment
+  labels:
+    app: nitin-go-server
+    type: back-end
+spec:
+  template:
+    metadata:
+      name: pod-go-server
+      labels:
+        app: nitin-go-server
+        type: back-end
+    spec:
+      containers:
+        - name: go-k8s-server # Runs on port 8080 as per the code
+          image: nitinkc/go-k8s-server:latest
+
+  replicas: 3
+  strategy:
+    type: Recreate # RollingUpdate : Default strategy
+#    rollingUpdate:
+#      maxSurge: 1       # Can create 1 extra pod above desired count during update
+#      maxUnavailable: 0 # 0 old pods are killed until new ones are healthy (Zero Downtime)
+  selector:
+    matchLabels:
+      type: back-end

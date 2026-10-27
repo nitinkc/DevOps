@@ -1,0 +1,64 @@
+<mxfile host="Electron">
+  <diagram id="spaces" name="Lab02-Address-Spaces">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Lab 02 — Three address spaces: node / pod / service (who allocates, who is routable)" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="760" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="underlay" value="&lt;b&gt;1 · Node address space — acme-main 10.10.0.0/24&lt;/b&gt;  (Docker bridge · routable · GCP: gke-main subnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="860" height="300" as="geometry"/>
+        </mxCell>
+        <mxCell id="node1" value="&lt;b&gt;acme&lt;/b&gt; control-plane&lt;br/&gt;eth0: 10.10.0.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;verticalAlign=top;fontSize=10;container=1;" vertex="1" parent="underlay">
+          <mxGeometry x="25" y="50" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="kube-apiserver :8443&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;hostNetwork: true → uses NODE IP&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" vertex="1" parent="node1">
+          <mxGeometry x="15" y="55" width="220" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="slice1" value="pod slice: 10.20.0.0/24" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#6c8ebf;align=center;" vertex="1" parent="node1">
+          <mxGeometry x="15" y="170" width="220" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="node2" value="&lt;b&gt;acme-m02&lt;/b&gt; worker · pool=main&lt;br/&gt;eth0: 10.10.0.11" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;verticalAlign=top;fontSize=10;container=1;" vertex="1" parent="underlay">
+          <mxGeometry x="305" y="50" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="cil2" value="cilium agent + eBPF maps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="node2">
+          <mxGeometry x="15" y="55" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pods2" value="pod slice: 10.20.1.0/24&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;veth ⇄ pod netns&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0f8;strokeColor=#6c8ebf;dashed=1;fontSize=10;" vertex="1" parent="node2">
+          <mxGeometry x="15" y="110" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="slice2" value="allocated by kube-controller-manager" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#6c8ebf;align=center;" vertex="1" parent="node2">
+          <mxGeometry x="15" y="170" width="220" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="node3" value="&lt;b&gt;acme-m03&lt;/b&gt; worker · allowed-open-nat=true&lt;br/&gt;eth0: 10.10.0.12" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;verticalAlign=top;fontSize=10;container=1;" vertex="1" parent="underlay">
+          <mxGeometry x="585" y="50" width="250" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="cil3" value="cilium agent + eBPF maps" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="node3">
+          <mxGeometry x="15" y="55" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pods3" value="pod slice: 10.20.2.0/24&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;veth ⇄ pod netns&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f0f8;strokeColor=#6c8ebf;dashed=1;fontSize=10;" vertex="1" parent="node3">
+          <mxGeometry x="15" y="110" width="220" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e23" value="cross-node pod traffic via Cilium (VXLAN)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;strokeWidth=2;dashed=1;fontSize=9;" edge="1" source="pods2" target="pods3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="svcs" value="&lt;b&gt;3 · Service address space — 10.30.0.0/24&lt;/b&gt;  (VIRTUAL IPs — no NIC exists; DNAT in kernel by eBPF/kube-proxy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="400" width="860" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="svck8s" value="kubernetes.default&lt;br/&gt;10.30.0.1:443 → DNAT 10.10.0.10:8443" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="svcs">
+          <mxGeometry x="25" y="45" width="400" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="svcdns" value="kube-dns (CoreDNS)&lt;br/&gt;10.30.0.10:53 → DNAT coredns pod 10.20.0.x:53" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="svcs">
+          <mxGeometry x="455" y="45" width="380" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="math" value="&lt;b&gt;2 · Pod CIDR math — 10.20.0.0/20&lt;/b&gt; = 4,096 IPs · /24 per node → max 16 nodes · GKE max_pods_per_node=64 → /25 per node → max 32 nodes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="860" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="note" value="hostNetwork:true pods (apiserver, etcd, kube-proxy, cilium) show NODE IPs — they program the network before pod networking exists" style="text;html=1;fillColor=#ffffff;fontSize=10;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="612" width="860" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

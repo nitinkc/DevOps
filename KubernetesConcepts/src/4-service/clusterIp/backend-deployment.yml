@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-server-deployment
+  labels:
+    app: nitin-go-server-deployment
+spec:
+  selector:
+    matchLabels:
+      app: go-k8s-server # <--- Must match template labels exactly!
+  ################################################
+  ########## Pod info within a template ##########
+  ################################################
+  template:
+    metadata:
+      labels:
+        app: go-k8s-server # <--- Must match selector.matchLabels exactly!
+    spec:
+      containers:
+        - name: go-k8s-server
+          image: nitinkc/go-k8s-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080 # for information purposes only
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 3
+    ################################################
+    ########## Pod info within a template ##########
+    ################################################
+  replicas: 3

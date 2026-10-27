@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-backend-service # minikube service go-backend-service. Minikube will automatically figure out the networking tunnel and pop open your browser (or give you a local URL) directly connected to your backend service!
+spec:
+  type: NodePort
+  selector:
+    app: go-k8s-server
+  ports:
+    - port: 80 # Internal Service Port. Port of the backend service
+      targetPort: 8080 # Container Application Port : Port where server is running. The actual port where your Go application code is running and listening inside the container.
+      nodePort: 30080 # External Gateway. This is what allows traffic originating outside the cluster (like your local machine) to enter

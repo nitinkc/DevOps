@@ -1,0 +1,94 @@
+<mxfile host="Electron">
+  <diagram id="topo" name="Target-Topology">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Target Topology — Local Lab (Docker + Minikube) mirrors GCP GKE 1:1" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="700" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="ops" value="&lt;b&gt;acme-ops · 10.10.1.0/28&lt;/b&gt;  (GCP: ops subnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="44" width="170" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="probe" value="&lt;b&gt;probe&lt;/b&gt;&lt;br/&gt;10.10.1.3&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;IAP bastion twin&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="ops">
+          <mxGeometry x="20" y="50" width="130" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="gwops" value="gw 10.10.1.1" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#666666;" vertex="1" parent="ops">
+          <mxGeometry x="20" y="160" width="130" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="router" value="&lt;b&gt;vpc-router&lt;/b&gt;&lt;br/&gt;10.10.1.2 ⇄ 10.10.0.250&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ip_forward=1 + iptables FORWARD&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;(GCP: routes + VPC firewall)&lt;/font&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="94" width="180" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="main" value="&lt;b&gt;acme-main · 10.10.0.0/24&lt;/b&gt;  (GCP: gke-main subnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="44" width="680" height="500" as="geometry"/>
+        </mxCell>
+        <mxCell id="reg" value="&lt;b&gt;registry:2&lt;/b&gt;&lt;br/&gt;10.10.0.200:5000&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Door 1 — AR twin&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="main">
+          <mxGeometry x="20" y="40" width="150" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="echo" value="&lt;b&gt;echo&lt;/b&gt;&lt;br/&gt;10.10.0.201&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;SNAT inspector&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="main">
+          <mxGeometry x="20" y="112" width="150" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="lb" value="&lt;b&gt;MetalLB VIPs&lt;/b&gt;&lt;br/&gt;10.10.0.240–249&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;internal ALB twin&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;" vertex="1" parent="main">
+          <mxGeometry x="20" y="184" width="150" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="cluster" value="&lt;b&gt;Minikube &amp;quot;acme&amp;quot;&lt;/b&gt; · pods 10.20.0.0/20 · svcs 10.30.0.0/24" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="main">
+          <mxGeometry x="190" y="30" width="470" height="450" as="geometry"/>
+        </mxCell>
+        <mxCell id="n1" value="acme (cp)&lt;br/&gt;10.10.0.10" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="40" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="n2" value="acme-m02&lt;br/&gt;pool=main" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="167" y="40" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="n3" value="acme-m03&lt;br/&gt;allowed-open-nat" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="318" y="40" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="doms" value="Isolated Domains" style="text;html=1;fillColor=#ffffff;fontSize=10;fontStyle=1;fontColor=#555555;align=left;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="104" width="200" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="d1" value="&lt;b&gt;dom-orders&lt;/b&gt;&lt;br/&gt;SA: orders" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="124" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="d2" value="&lt;b&gt;dom-payments&lt;/b&gt;&lt;br/&gt;SA: payments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="167" y="124" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="d3" value="&lt;b&gt;dom-inventory&lt;/b&gt;&lt;br/&gt;SA: inventory" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="318" y="124" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="plat" value="Platform Namespaces" style="text;html=1;fillColor=#ffffff;fontSize=10;fontStyle=1;fontColor=#555555;align=left;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="196" width="200" height="16" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1" value="kube-system&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Cilium · CoreDNS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="216" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2" value="istio-system&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;istiod&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="167" y="216" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3" value="observability&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;log-aggregator&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="318" y="216" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4" value="flux-system&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;GitOps controllers&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="cluster">
+          <mxGeometry x="167" y="278" width="135" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="call1" value="orders → payments :8080 ✔" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#2e7d32;align=left;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="340" width="200" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="call2" value="orders → inventory :8080 ✔" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#2e7d32;align=left;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="358" width="200" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="call3" value="payments ⇄ inventory ✗ (L4+L7)" style="text;html=1;fillColor=#ffffff;fontSize=9;fontColor=#b85450;align=left;" vertex="1" parent="cluster">
+          <mxGeometry x="16" y="376" width="220" height="14" as="geometry"/>
+        </mxCell>
+        <mxCell id="eprobe" value="route via 10.10.1.2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;fontSize=9;" edge="1" source="probe" target="router" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ertr" value="stateful firewall" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;fontSize=9;" edge="1" source="router" target="lb" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ertr2" value="TCP 8443 authorized net" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;fontSize=9;dashed=1;" edge="1" source="router" target="n1" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,58 @@
+<mxfile host="Electron">
+  <diagram id="telemetry" name="Lab07-Pod-Telemetry">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="700" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Lab 07 — One pod, four containers, three telemetry paths to one central place" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="800" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="pod" value="&lt;b&gt;4-Container Pod · dom-orders&lt;/b&gt; — shared netns (127.0.0.1) + shared volumes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="480" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="&lt;b&gt;1 · app&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;JSON → stdout&lt;br/&gt;writes /var/log/app/app.log&lt;br/&gt;OTLP → 127.0.0.1:4318&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="pod">
+          <mxGeometry x="20" y="50" width="200" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="proxy" value="&lt;b&gt;2 · istio-proxy&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Envoy mTLS&lt;br/&gt;JSON access log → stdout&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="pod">
+          <mxGeometry x="250" y="50" width="200" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="fb" value="&lt;b&gt;3 · fluent-bit&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;tails /var/log/app/*.log (RO)&lt;br/&gt;adds domain=orders&lt;br/&gt;forward → aggregator:24224&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="pod">
+          <mxGeometry x="20" y="150" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="otel" value="&lt;b&gt;4 · otel-collector&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;listens 127.0.0.1:4318&lt;br/&gt;batches → debug/googlecloud&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="pod">
+          <mxGeometry x="250" y="150" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="dir" value="emptyDir · /var/log/app" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;" vertex="1" parent="pod">
+          <mxGeometry x="155" y="270" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="node" value="&lt;b&gt;Node (Kubelet)&lt;/b&gt;&lt;br/&gt;/var/log/containers/*.log&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;GCP: GKE node agent → _Default&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="620" y="80" width="240" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="agg" value="&lt;b&gt;log-aggregator&lt;/b&gt; · observability ns&lt;br/&gt;Fluent Bit forward :24224&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;GCP: Log Router sink → central-app-logs bucket&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=left;spacingLeft=6;" vertex="1" parent="1">
+          <mxGeometry x="620" y="240" width="240" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_a" value="Pattern A: stdout" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;strokeWidth=2;fontSize=9;" edge="1" source="app" target="node" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_p" value="Pattern A: stdout" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;fontSize=9;" edge="1" source="proxy" target="node" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_d" value="write" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#666666;fontSize=9;" edge="1" source="app" target="dir" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_f" value="tail" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#666666;fontSize=9;" edge="1" source="dir" target="fb" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_b" value="Pattern B: file-tail → TCP :24224&lt;br/&gt;(needs NetPol egress hole!)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=3;fontSize=9;" edge="1" source="fb" target="agg" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_c" value="Pattern C: OTLP loopback&lt;br/&gt;(inside pod — no policy needed)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;strokeWidth=2;fontSize=9;" edge="1" source="app" target="otel" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="traps" value="&lt;b&gt;Traps observed in this lab&lt;/b&gt;&lt;br/&gt;· subPath mounts preserve parsers.conf (plain ConfigMap mount wipes the dir)&lt;br/&gt;· sidecars share pod netns → default-deny egress blocks fluent-bit → :24224&lt;br/&gt;· 3 extra sidecars = +125m CPU / +192Mi RAM per replica — re-check allocatable" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="460" width="820" height="80" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

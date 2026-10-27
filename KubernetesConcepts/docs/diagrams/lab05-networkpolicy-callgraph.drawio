@@ -1,0 +1,58 @@
+<mxfile host="Electron">
+  <diagram id="netpol" name="Lab05-CallGraph">
+    <mxGraphModel dx="1200" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="680" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Lab 05 — Zero-trust call graph: default-deny everywhere, two explicit allow paths" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="8" width="800" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="ks" value="&lt;b&gt;kube-system&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;align=center;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="60" width="220" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="dns" value="&lt;b&gt;CoreDNS&lt;/b&gt;&lt;br/&gt;10.30.0.10 · UDP/TCP :53" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;" vertex="1" parent="ks">
+          <mxGeometry x="30" y="40" width="160" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="dord" value="&lt;b&gt;dom-orders&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;default-deny Ingress+Egress&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;align=center;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="300" width="260" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="ord" value="&lt;b&gt;orders&lt;/b&gt; pod :8080&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;egress allow: dns + dom-payments/dom-inventory :8080&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="dord">
+          <mxGeometry x="20" y="60" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dpay" value="&lt;b&gt;dom-payments&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;default-deny Ingress+Egress&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;align=center;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="140" width="260" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="pay" value="&lt;b&gt;payments&lt;/b&gt; pod :8080&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ingress allow: only from dom-orders :8080&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;" vertex="1" parent="dpay">
+          <mxGeometry x="20" y="60" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="dinv" value="&lt;b&gt;dom-inventory&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;default-deny Ingress+Egress&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=center;spacingTop=4;fontSize=11;container=1;" vertex="1" parent="1">
+          <mxGeometry x="720" y="420" width="260" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="inv" value="&lt;b&gt;inventory&lt;/b&gt; pod :8080&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ingress allow: only from dom-orders :8080&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="dinv">
+          <mxGeometry x="20" y="60" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="edns1" value="egress :53" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;fontSize=9;" edge="1" source="ord" target="dns" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edns2" value="egress :53" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;fontSize=9;" edge="1" source="pay" target="dns" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="edns3" value="egress :53" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;fontSize=9;" edge="1" source="inv" target="dns" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" value="✔ orders → payments :8080&lt;br/&gt;(egress allow + ingress allow)" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2e7d32;strokeWidth=3;fontSize=9;" edge="1" source="ord" target="pay" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" value="✔ orders → inventory :8080" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#2e7d32;strokeWidth=3;fontSize=9;" edge="1" source="ord" target="inv" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e23" value="✗ payments → inventory&lt;br/&gt;denied by egress + ingress&lt;br/&gt;symptom: timeout · Hubble DROPPED" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;strokeWidth=2;dashed=1;fontSize=9;fontColor=#b85450;" edge="1" source="pay" target="inv" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="rules" value="&lt;b&gt;Non-negotiable rules&lt;/b&gt;&lt;br/&gt;· Policies are additive — any allow opens, everything else denies&lt;br/&gt;· BOTH ends needed: egress at caller + ingress at callee&lt;br/&gt;· Policy ports = POD ports (8080), not Service port (80) — DNAT first&lt;br/&gt;· default-deny egress kills DNS, istiod:15012, log shipping, WI metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="560" height="110" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

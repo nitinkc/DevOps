@@ -1,0 +1,55 @@
+<mxfile host="Electron">
+  <diagram id="stack" name="7-Layer-Stack">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="The 7-Layer Platform Stack — every packet traverses it top-down" style="text;html=1;fillColor=#ffffff;fontSize=14;fontStyle=1;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="640" height="24" as="geometry"/>
+        </mxCell>
+        <mxCell id="l7" value="&lt;b&gt;L7 · GitOps Delivery — FluxCD&lt;/b&gt;&lt;br/&gt;10-infra-controllers (Istio CRDs, istiod, MetalLB) → 20-infra-configs (NS, NetPol, mTLS) → 30-apps (HelmReleases)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="44" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l6" value="&lt;b&gt;L6 · North-South Entry &amp;amp; Observability&lt;/b&gt;&lt;br/&gt;MetalLB VIP 10.10.0.240 (GCP: gke-l7-rilb / proxy-only 10.10.254.0/23) · Central log-aggregator (GCP: Cloud Logging bucket + sink)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="126" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" value="&lt;b&gt;L5 · L7 Identity Guard — Istio Sidecar Mesh&lt;/b&gt;&lt;br/&gt;PeerAuthentication STRICT mTLS (plaintext → TCP Reset) · AuthorizationPolicy SPIFFE SA (wrong caller → HTTP 403)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="208" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l4" value="&lt;b&gt;L4 · L3/L4 Guard — Cilium NetworkPolicy (GKE Dataplane V2)&lt;/b&gt;&lt;br/&gt;Default-deny Ingress+Egress · explicit holes: pod port 8080, DNS 53, istiod 15012, collector 24224 → silent timeout + Hubble DROPPED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="290" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" value="&lt;b&gt;L3 · Workloads, Services &amp;amp; CoreDNS&lt;/b&gt;&lt;br/&gt;ClusterIP 10.30.0.0/24 → DNAT port 80 → targetPort 8080 · 4-container pods in 10.20.0.0/20 [app · istio-proxy · fluent-bit · otel-collector]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="372" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" value="&lt;b&gt;L2 · Pod Network &amp;amp; Egress — CNI + Node Routing&lt;/b&gt;&lt;br/&gt;Cilium eBPF datapath + masquerade (Pod IP → Node IP) · 4 outbound doors: D1 PGA/Registry · D2 /32 VIP · D3 tagged NAT · D4 hybrid router" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="454" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="l1" value="&lt;b&gt;L1 · Underlay Network — Docker Bridges (GCP: VPC)&lt;/b&gt;&lt;br/&gt;acme-main 10.10.0.0/24 ⇄ vpc-router (ip_forward + iptables FORWARD) ⇄ acme-ops 10.10.1.0/28" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;spacingLeft=10;" vertex="1" parent="1">
+          <mxGeometry x="40" y="536" width="640" height="62" as="geometry"/>
+        </mxCell>
+        <mxCell id="e76" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l7" target="l6" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e65" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l6" target="l5" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e54" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l5" target="l4" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e43" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l4" target="l3" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e32" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l3" target="l2" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e21" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;strokeWidth=2;" edge="1" source="l2" target="l1" parent="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="legend" value="Legend — red: L4 guard · orange: L7 guard · blue: workloads · yellow: egress · green: ingress/observe · purple: GitOps · gray: underlay" style="text;html=1;fillColor=#ffffff;fontSize=10;fontColor=#666666;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="608" width="640" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
