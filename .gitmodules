@@ -1,9 +1,6 @@
 [submodule "DockerConcepts"]
 	path = DockerConcepts
 	url = https://github.com/nitinkc/DockerConcepts.git
-[submodule "GCP_Kubernetes"]
-	path = GCP_Kubernetes
-	url = https://github.com/nitinkc/GCP_Kubernetes.git
 [submodule "HelmCharts"]
 	path = HelmCharts
 	url = https://github.com/nitinkc/HelmCharts.git
@@ -22,6 +19,3 @@
 [submodule "DevOpsLearning"]
 	path = DevOpsLearning
 	url = https://github.com/nitinkc/DevOpsLearning.git
-[submodule "KubernetesConcepts"]
-	path = KubernetesConcepts
-	url = https://github.com/nitinkc/KubernetesConcepts.git
