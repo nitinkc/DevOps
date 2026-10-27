@@ -22,3 +22,6 @@
 [submodule "DevOpsLearning"]
 	path = DevOpsLearning
 	url = https://github.com/nitinkc/DevOpsLearning.git
+[submodule "KubernetesConcepts"]
+	path = KubernetesConcepts
+	url = https://github.com/nitinkc/KubernetesConcepts.git
