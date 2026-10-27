@@ -1,5 +1,0 @@
-
-
-## PersistentVolumes
-
-## PersistentVolume claims
