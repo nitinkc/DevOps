@@ -20,3 +20,9 @@
 	path = KubernetesConcepts
 	url = https://github.com/nitinkc/KubernetesConcepts.git
 
+[submodule "go-k8s-server"]
+	path = go-k8s-server
+	url = https://github.com/nitinkc/go-k8s-server.git
+[submodule "k8s-frontend"]
+	path = k8s-frontend
+	url = https://github.com/nitinkc/k8s-frontend.git
